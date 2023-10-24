@@ -21,7 +21,7 @@ with DAG('pipe_ml_dag_preprocess',
     task_ml_preprocess = PythonOperator(
         task_id='ml_preprocess',
         python_callable=preprocess_data,
-        op_args=['civil-epoch-398922', 'mlairflow', 'data_titanic', 'mlairflow_process'],
+        op_args=['civil-epoch-398922', 'mlairflowfinal', 'data_water', 'mlairflow_water_process'],
     )
 
     # Establecer las dependencias

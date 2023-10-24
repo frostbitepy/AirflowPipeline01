@@ -5,7 +5,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from datetime import datetime, timedelta
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
-from pipe_ml_modules import load_data,ml_training_RandomForest_bigquery,ml_training_logistic_regression_bigquery,ml_training_gradient_boosting_bigquery
+from pipe_ml_modules import load_data,ml_training_SupportVectorMachine_bigquery, ml_training_KNearestNeighbors_bigquery
 
 default_args = {
     'owner': 'airflow',
@@ -24,7 +24,7 @@ with DAG('pipe_ml_orchestador_dags',
     load_data = PythonOperator(
         task_id='load_data',
         python_callable=load_data,
-        op_args=["civil-epoch-398922.mlairflow.data_titanic","gs://automatic-tract-396023-datasetml-f/titanic_train_csv.csv"],
+        op_args=["civil-epoch-398922.mlairflowfinal.data_water","gs://automatic-tract-396023-datasetml-f/water_potability.csv"],
     )    
 
     preprocess = TriggerDagRunOperator(
@@ -37,40 +37,19 @@ with DAG('pipe_ml_orchestador_dags',
         join_start = DummyOperator(
             task_id='start',
         )
-        """
-        training_gradient_boosting = TriggerDagRunOperator(
-        task_id='gradient_boosting',
-        trigger_dag_id='pipe_ml_dag_training_gradient_boosting',
-        )
-        logistic_regression = TriggerDagRunOperator(
-        task_id='logistic_regression',
-        trigger_dag_id='pipe_ml_dag_training_logistic_regression',
-        )
-        random_forest = TriggerDagRunOperator(
-        task_id='random_forest',
-        trigger_dag_id='pipe_ml_dag_training_randomforest',
-        )
-        """
         
         # Define la tarea
-        ml_training_randomforest = PythonOperator(
-            task_id='ml_training_randomforest',
-            python_callable=ml_training_RandomForest_bigquery,
-            op_args=['civil-epoch-398922', 'mlairflow', 'mlairflow_process'],
+        ml_training_svm = PythonOperator(
+            task_id='ml_training_svm',
+            python_callable=ml_training_SupportVectorMachine_bigquery,
+            op_args=['civil-epoch-398922', 'mlairflowfinal', 'mlairflow_water_process'],
         )
         
         # Define la tarea
-        ml_training_logistic_regression = PythonOperator(
+        ml_training_knearest = PythonOperator(
             task_id='ml_training_logistic_regression',
-            python_callable=ml_training_logistic_regression_bigquery,
-            op_args=['civil-epoch-398922', 'mlairflow', 'mlairflow_process'],
-        )
-        
-        # Define la tarea
-        ml_training_gradient_boosting = PythonOperator(
-            task_id='ml_training_gradient_boosting',
-            python_callable=ml_training_gradient_boosting_bigquery,
-            op_args=['civil-epoch-398922', 'mlairflow', 'mlairflow_process'],
+            python_callable=ml_training_KNearestNeighbors_bigquery,
+            op_args=['civil-epoch-398922', 'mlairflowfinal', 'mlairflow_water_process'],
         )
 
         join_task = DummyOperator(
@@ -79,9 +58,8 @@ with DAG('pipe_ml_orchestador_dags',
         )
 
         #join_start >> [training_gradient_boosting, logistic_regression, random_forest] >> join_task
-        join_start >> [ml_training_randomforest, ml_training_logistic_regression, ml_training_gradient_boosting] >> join_task         
-
-    
+        join_start >> [ml_training_svm, ml_training_knearest] >> join_task         
+  
 
     
     fin = DummyOperator(
